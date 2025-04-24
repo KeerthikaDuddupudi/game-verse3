@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Falling Shapes Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(to right, #141e30, #243b55);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      position: relative;
+    }
+
+    h1 {
+      text-shadow: 0 0 10px #00f0ff;
+    }
+
+    canvas {
+      border: 4px solid #00f0ff;
+      background-color: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 20px #00f0ff;
+    }
+
+    .info {
+      margin-top: 20px;
+      font-size: 1.2rem;
+    }
+
+    .info span {
+      font-weight: bold;
+      color: #00f0ff;
+    }
+
+    #restartBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #00f0ff;
+      color: #000;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00f0ff;
+    }
+
+    #restartBtn:hover {
+      background-color: #00bfff;
+    }
+
+    #closeBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 2rem;
+      color: #00f0ff;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease-in-out;
+    }
+
+    #closeBtn:hover {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+  <button id="closeBtn">&#10005;</button> <!-- Cross button -->
+  <h1>Falling Shapes</h1>
+  <canvas id="gameCanvas" width="300" height="600"></canvas>
+  <div class="info">
+    <div>Score: <span id="score">0</span></div>
+    <div>Time Left: <span id="time">60</span> sec</div>
+  </div>
+  <button id="restartBtn">Restart Game</button>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK_SIZE = 30;
+
+    const colors = ["cyan", "yellow", "purple", "orange", "blue", "green", "red"];
+
+    const shapes = [
+      [[1, 1, 1, 1]],                 // I
+      [[1, 1], [1, 1]],              // O
+      [[0, 1, 0], [1, 1, 1]],        // T
+      [[1, 0, 0], [1, 1, 1]],        // L
+      [[0, 0, 1], [1, 1, 1]],        // J
+      [[0, 1, 1], [1, 1, 0]],        // S
+      [[1, 1, 0], [0, 1, 1]],        // Z
+    ];
+
+    let board, currentPiece, score, timeLeft, dropInterval, gameInterval, timerInterval;
+
+    function initGame() {
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+      currentPiece = createPiece();
+      score = 0;
+      timeLeft = 60;
+      dropInterval = 400;
+      document.getElementById("score").textContent = score;
+      document.getElementById("time").textContent = timeLeft;
+
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+
+      gameInterval = setInterval(update, dropInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("time").textContent = timeLeft;
+        if (timeLeft <= 0) {
+          endGame("Time's up!");
+        }
+      }, 1000);
+    }
+
+    function endGame(message) {
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+      alert(`${message} Final Score: ${score}`);
+    }
+
+    function createPiece() {
+      const index = Math.floor(Math.random() * shapes.length);
+      const shape = shapes[index];
+      return {
+        shape,
+        color: colors[index],
+        x: Math.floor((COLS - shape[0].length) / 2),
+        y: 0
+      };
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      board.forEach((row, y) =>
+        row.forEach((cell, x) => {
+          if (cell) drawBlock(x, y, cell);
+        })
+      );
+      drawPiece(currentPiece);
+    }
+
+    function drawBlock(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+      ctx.strokeStyle = "#222";
+      ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    }
+
+    function drawPiece(piece) {
+      piece.shape.forEach((row, dy) =>
+        row.forEach((val, dx) => {
+          if (val && piece.y + dy >= 0) {
+            drawBlock(piece.x + dx, piece.y + dy, piece.color);
+          }
+        })
+      );
+    }
+
+    function update() {
+      if (canMove(currentPiece, 0, 1)) {
+        currentPiece.y++;
+      } else {
+        mergePiece();
+        clearLines();
+        currentPiece = createPiece();
+        if (!canMove(currentPiece, 0, 0)) {
+          endGame("Game Over!");
+        }
+      }
+      drawBoard();
+    }
+
+    function canMove(piece, dx, dy) {
+      return piece.shape.every((row, rIdx) =>
+        row.every((val, cIdx) => {
+          if (!val) return true;
+          const x = piece.x + cIdx + dx;
+          const y = piece.y + rIdx + dy;
+          return (
+            x >= 0 &&
+            x < COLS &&
+            y < ROWS &&
+            (y < 0 || board[y][x] === 0)
+          );
+        })
+      );
+    }
+
+    function mergePiece() {
+      currentPiece.shape.forEach((row, rIdx) =>
+        row.forEach((val, cIdx) => {
+          if (val) {
+            const x = currentPiece.x + cIdx;
+            const y = currentPiece.y + rIdx;
+            if (y >= 0 && y < ROWS) {
+              board[y][x] = currentPiece.color;
+            }
+          }
+        })
+      );
+    }
+
+    function clearLines() {
+      for (let y = ROWS - 1; y >= 0; y--) {
+        if (board[y].every(cell => cell !== 0)) {
+          board.splice(y, 1);
+          board.unshift(Array(COLS).fill(0));
+          score += 100;
+          document.getElementById("score").textContent = score;
+          y++;
+        }
+      }
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" && canMove(currentPiece, -1, 0)) {
+        currentPiece.x--;
+      } else if (e.key === "ArrowRight" && canMove(currentPiece, 1, 0)) {
+        currentPiece.x++;
+      } else if (e.key === "ArrowDown" && canMove(currentPiece, 0, 1)) {
+        currentPiece.y++;
+      }
+      drawBoard();
+    });
+
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      initGame();
+      drawBoard();
+    });
+
+    // Redirect to dashboard.html when close button is clicked
+    document.getElementById("closeBtn").addEventListener("click", () => {
+      window.location.href = "dashboard.html";
+    });
+
+    // Start game
+    initGame();
+    drawBoard();
+  </script>
+</body>
+</html>

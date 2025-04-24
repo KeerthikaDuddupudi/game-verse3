@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Scramble Game</title>
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 400px;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Style for the Exit button */
+button.exit {
+    background-color: #f44336; /* Red color for the Exit button */
+}
+
+button.exit:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+input {
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 16px;
+    width: 80%;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+}
+
+h1 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+h2 {
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+#feedback {
+    margin-top: 20px;
+    font-weight: bold;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Word Scramble Game</h1>
+        <div id="difficulty-selection">
+            <h3>Select Difficulty Level</h3>
+            <button onclick="startGame('easy')">Easy</button>
+            <button onclick="startGame('medium')">Medium</button>
+            <button onclick="startGame('hard')">Hard</button>
+        </div>
+        
+        <div id="game-area" style="display:none;">
+            <h2 id="level-heading"></h2>
+            <div id="scrambled-word"></div>
+            <input type="text" id="user-input" placeholder="Enter the word" />
+            <button onclick="checkAnswer()">Submit</button>
+            <p id="feedback"></p>
+            <button class="exit" onclick="exitGame()">Exit</button> <!-- Exit Button with 'exit' class -->
+        </div>
+    </div>
+    <script>
+        const words = {
+    easy: ['apple', 'orange', 'banana', 'grape', 'cherry'],
+    medium: ['elephant', 'giraffe', 'dolphin', 'guitar', 'piano'],
+    hard: ['magnificent', 'astronaut', 'jurisdiction', 'squirrel', 'metamorphosis']
+};
+
+let currentWord = '';
+let level = '';
+let scrambledWord = '';
+
+function startGame(difficulty) {
+    level = difficulty;
+    document.getElementById('difficulty-selection').style.display = 'none';
+    document.getElementById('game-area').style.display = 'block';
+    document.getElementById('level-heading').innerText = `Level: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`;
+    
+    // Pick a random word based on the level
+    currentWord = words[level][Math.floor(Math.random() * words[level].length)];
+    scrambledWord = scrambleWord(currentWord);
+    document.getElementById('scrambled-word').innerText = scrambledWord;
+}
+
+function scrambleWord(word) {
+    const scrambled = word.split('').sort(() => Math.random() - 0.5).join('');
+    return scrambled;
+}
+
+function checkAnswer() {
+    const userInput = document.getElementById('user-input').value.toLowerCase();
+    const feedbackElement = document.getElementById('feedback');
+
+    if (userInput === currentWord) {
+        feedbackElement.innerText = 'Correct! Well done!';
+        setTimeout(() => {
+            feedbackElement.innerText = ''; // Clear feedback after 2 seconds
+            startGame(level); // Restart with a new word
+        }, 2000);
+    } else {
+        feedbackElement.innerText = 'Try again!';
+        setTimeout(() => {
+            feedbackElement.innerText = ''; // Clear feedback after 2 seconds
+        }, 2000);
+    }
+}
+
+// Function to exit the game and navigate to the home page (index.html)
+function exitGame() {
+    window.location.href = 'dashboard.html'; // Redirect to the home page (index.html)
+}
+    </script>
+</body>
+</html>

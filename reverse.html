@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reverse Word Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: white;
+      text-align: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+      transition: opacity 0.5s ease-in-out;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    h1 {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    select, input, button {
+      padding: 10px;
+      font-size: 1.5rem;
+      border: none;
+      border-radius: 8px;
+      margin: 10px;
+    }
+
+    button {
+      background-color: #00c9a7;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #007c64;
+    }
+
+    #word-display {
+      font-size: 6rem;
+      letter-spacing: 15px;
+      margin: 30px 0;
+      animation: pulse 0.8s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+
+    #top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+    }
+
+    #coin-box {
+      display: flex;
+      align-items: center;
+      position: relative;
+      font-size: 2rem;
+    }
+
+    .floating-coin {
+      position: absolute;
+      font-size: 2.5rem;
+      animation: flyToScore 0.8s ease forwards;
+      z-index: 100;
+    }
+
+    @keyframes flyToScore {
+      0% {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+      100% {
+        top: -20px;
+        left: 90%;
+        transform: translate(-50%, -50%) scale(0.2);
+        opacity: 0;
+      }
+    }
+
+    #user-input {
+      font-size: 2rem;
+      width: 80%;
+      text-align: center;
+    }
+
+    #game-over-screen h1 {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Cross button styles */
+    #close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 2rem;
+      color: white;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    #close-btn:hover {
+      color: #00c9a7;
+    }
+  </style>
+</head>
+<body>
+  <button id="close-btn" onclick="window.location.href='dashboard.html';">✖</button>
+
+  <div id="start-screen" class="screen active">
+    <h1>🎮 Reverse Word Game</h1>
+    <label for="time">Select Time:</label>
+    <select id="time">
+      <option value="60">1 Minute</option>
+      <option value="90">1:30 Minutes</option>
+      <option value="120">2 Minutes</option>
+    </select>
+    <button id="start-btn">Start Game</button>
+  </div>
+
+  <div id="game-screen" class="screen">
+    <div id="top-bar">
+      <h2 id="timer">⏱️ Time: 0</h2>
+      <div id="coin-box">
+        👜 <span id="score">0</span>
+      </div>
+    </div>
+    <div id="word-area">
+      <h1 id="word-display"></h1>
+    </div>
+    <input type="text" id="user-input" placeholder="Type the word..." autocomplete="off" />
+    <button id="submit-btn">Submit</button>
+  </div>
+
+  <div id="game-over-screen" class="screen">
+    <h1>Game Over 🎉</h1>
+    <p>Your Score: <span id="final-score"></span></p>
+    <p id="high-score-msg"></p>
+    <div>
+      <button id="play-again-btn">Play Again</button>
+      <button id="restart-btn">Start New Game</button>
+    </div>
+  </div>
+
+  <audio id="coin-sound" src="coin.mp3"></audio>
+  <audio id="end-sound" src="end.mp3"></audio>
+  <audio id="correct-sound" src="correct.mp3"></audio>
+  <script>
+    let words = [];
+    let usedWords = new Set();
+
+    async function loadWords() {
+      const response = await fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words_dictionary.json");
+      const data = await response.json();
+      words = Object.keys(data).filter(w => w.length >= 6 && w.length <= 20);
+    }
+
+    let score = 0;
+    let highScore = 0;
+    let timeLeft = 0;
+    let currentWord = "";
+    let timer;
+
+    const startScreen = document.getElementById("start-screen");
+    const gameScreen = document.getElementById("game-screen");
+    const gameOverScreen = document.getElementById("game-over-screen");
+    const wordDisplay = document.getElementById("word-display");
+    const userInput = document.getElementById("user-input");
+    const scoreDisplay = document.getElementById("score");
+    const timerDisplay = document.getElementById("timer");
+    const finalScore = document.getElementById("final-score");
+    const highScoreMsg = document.getElementById("high-score-msg");
+    const coinSound = document.getElementById("coin-sound");
+    const correctSound = document.getElementById("correct-sound");
+    const endSound = document.getElementById("end-sound");
+    const coinBox = document.getElementById("coin-box");
+    const submitBtn = document.getElementById("submit-btn");
+
+    document.getElementById("start-btn").addEventListener("click", async () => {
+      await loadWords();
+      startGame();
+    });
+
+    submitBtn.addEventListener("click", checkAnswer);
+    userInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") checkAnswer();
+    });
+
+    document.getElementById("restart-btn").addEventListener("click", () => {
+      gameOverScreen.classList.remove("active");
+      startScreen.classList.add("active");
+    });
+
+    document.getElementById("play-again-btn").addEventListener("click", () => {
+      gameOverScreen.classList.remove("active");
+      startGame();
+    });
+
+    function startGame() {
+      score = 0;
+      usedWords.clear();
+      scoreDisplay.innerText = score;
+      timeLeft = parseInt(document.getElementById("time").value);
+      startScreen.classList.remove("active");
+      gameOverScreen.classList.remove("active");
+      gameScreen.classList.add("active");
+      userInput.value = "";
+      generateWord();
+      updateTimer();
+      timer = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      timerDisplay.innerText = `⏱️ Time: ${timeLeft}`;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        endSound.play();
+        endGame();
+      } else {
+        timeLeft--;
+      }
+    }
+
+    function generateWord() {
+      let randomWord;
+      do {
+        randomWord = words[Math.floor(Math.random() * words.length)];
+      } while (usedWords.has(randomWord));
+      usedWords.add(randomWord);
+      currentWord = randomWord;
+      wordDisplay.innerText = currentWord.split('').reverse().join('');
+    }
+
+    function checkAnswer() {
+      if (userInput.value.toLowerCase() === currentWord.toLowerCase()) {
+        score++;
+        scoreDisplay.innerText = score;
+        coinSound.play();
+        correctSound.play();
+        createCoinAnimation();
+        userInput.value = "";
+        generateWord();
+      }
+    }
+
+    function createCoinAnimation() {
+      const coin = document.createElement("div");
+      coin.innerText = "🪙";
+      coin.classList.add("floating-coin");
+      coinBox.appendChild(coin);
+      setTimeout(() => coin.remove(), 800);
+    }
+
+    function endGame() {
+      gameScreen.classList.remove("active");
+      gameOverScreen.classList.add("active");
+      finalScore.innerText = score;
+      if (score > highScore) {
+        highScore = score;
+        highScoreMsg.innerText = "🎉 Yes! You beat your high score!";
+      } else {
+        highScoreMsg.innerText = `😢 Sorry! You didn’t beat your high score of ${highScore}`;
+      }
+    }
+  </script>
+</body>
+</html>

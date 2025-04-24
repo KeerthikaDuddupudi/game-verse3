@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GAMEVERSE</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+      position: relative;
+      color: white;
+    }
+
+    .loader-container {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .curved-title {
+      width: 100%;
+      height: 700px; /* Adjusted for full U shape */
+      margin-top: 50px;
+    }
+
+    text {
+      fill: #00f5ff;
+      font-size: 100px;
+      letter-spacing: 25px;
+      text-shadow: 0 0 15px #ff00ff, 0 0 30px #00f5ff;
+      animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+      0% {
+        text-shadow: 0 0 15px #ff00ff, 0 0 30px #00f5ff;
+      }
+      100% {
+        text-shadow: 0 0 25px #00f5ff, 0 0 50px #ff00ff;
+      }
+    }
+
+    .loading-text {
+      font-size: 1.5rem;
+      margin-top: -200px;
+      animation: fadeIn 1s ease-in;
+    }
+
+    .loading-bar {
+      width: 400px;
+      height: 22px;
+      background: #444;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 15px auto;
+      box-shadow: 0 0 15px #00f5ff;
+    }
+
+    .progress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #00f5ff, #ff00ff);
+      transition: width 0.1s ease-in-out;
+    }
+
+    #percent {
+      font-size: 1.3rem;
+      animation: fadeIn 2s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Star styles */
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 0 8px white, 0 0 15px white;
+      animation: twinkle 2s infinite ease-in-out;
+      z-index: 1;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.6); }
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-container">
+    <svg viewBox="0 0 1000 600" class="curved-title">
+      <defs>
+        <path id="curve" d="M100,500 A400,400 0 0,1 900,500" />
+      </defs>
+      <text width="1000">
+        <textPath href="#curve" startOffset="50%" text-anchor="middle">
+          GAMEVERSE
+        </textPath>
+      </text>
+    </svg>
+
+    <p class="loading-text">Loading...</p>
+    <div class="loading-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+    <p id="percent">0%</p>
+  </div>
+
+  <script>
+    // Star background generator
+    for (let i = 0; i < 100; i++) {
+      const star = document.createElement("div");
+      star.classList.add("star");
+
+      const size = Math.random() * 2 + 1;
+      const isBig = Math.random() < 0.1;
+
+      star.style.width = isBig ? "5px" : `${size}px`;
+      star.style.height = isBig ? "5px" : `${size}px`;
+      star.style.top = Math.random() * 100 + "vh";
+      star.style.left = Math.random() * 100 + "vw";
+      star.style.animationDuration = (Math.random() * 3 + 2) + "s";
+
+      if (isBig) {
+        star.style.boxShadow = "0 0 15px white, 0 0 25px white, 0 0 40px #ffffff";
+      }
+
+      document.body.appendChild(star);
+    }
+
+    // Loading bar logic
+    let progress = document.getElementById('progress');
+    let percent = document.getElementById('percent');
+    let load = 0;
+
+    let interval = setInterval(() => {
+      if (load >= 100) {
+        clearInterval(interval);
+        window.location.href = "dashboard.html";
+      } else {
+        load++;
+        progress.style.width = load + '%';
+        percent.innerText = load + '%';
+      }
+    }, 30);
+  </script>
+</body>
+</html>

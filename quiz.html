@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Indian States & Capitals Quiz</title>
+  <style>
+    body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: url('https://images.unsplash.com/photo-1567605787332-88e8db6a0a5c') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .quiz-container {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  }
+  
+  h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  #question {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+  
+  #options button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  #options button:hover {
+    background-color: #45a049;
+  }
+  
+  #feedback {
+    margin: 10px 0;
+    font-weight: bold;
+  }
+  
+  #next-btn, #exit-btn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  #next-btn {
+    background-color: #2196F3;
+    color: white;
+  }
+  
+  #exit-btn {
+    background-color: #f44336;
+    color: white;
+  }
+  
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>Indian States & Capitals Quiz</h1>
+    <div id="quiz-box">
+      <div id="question"></div>
+      <div id="options"></div>
+      <div id="feedback"></div>
+      <button id="next-btn">Next</button>
+      <button id="exit-btn" onclick="exitQuiz()">Exit</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+    { state: "Andhra Pradesh", capital: "Amaravati" },
+    { state: "Arunachal Pradesh", capital: "Itanagar" },
+    { state: "Assam", capital: "Dispur" },
+    { state: "Bihar", capital: "Patna" },
+    { state: "Chhattisgarh", capital: "Raipur" },
+    { state: "Goa", capital: "Panaji" },
+    { state: "Gujarat", capital: "Gandhinagar" },
+    { state: "Haryana", capital: "Chandigarh" },
+    { state: "Himachal Pradesh", capital: "Shimla" },
+    { state: "Jharkhand", capital: "Ranchi" },
+    { state: "Karnataka", capital: "Bengaluru" },
+    { state: "Kerala", capital: "Thiruvananthapuram" },
+    { state: "Madhya Pradesh", capital: "Bhopal" },
+    { state: "Maharashtra", capital: "Mumbai" },
+    { state: "Manipur", capital: "Imphal" },
+    { state: "Meghalaya", capital: "Shillong" },
+    { state: "Mizoram", capital: "Aizawl" },
+    { state: "Nagaland", capital: "Kohima" },
+    { state: "Odisha", capital: "Bhubaneswar" },
+    { state: "Punjab", capital: "Chandigarh" },
+    { state: "Rajasthan", capital: "Jaipur" },
+    { state: "Sikkim", capital: "Gangtok" },
+    { state: "Tamil Nadu", capital: "Chennai" },
+    { state: "Telangana", capital: "Hyderabad" },
+    { state: "Tripura", capital: "Agartala" },
+    { state: "Uttar Pradesh", capital: "Lucknow" },
+    { state: "Uttarakhand", capital: "Dehradun" },
+    { state: "West Bengal", capital: "Kolkata" },
+  
+    // Union Territories
+    { state: "Andaman and Nicobar Islands", capital: "Port Blair" },
+    { state: "Chandigarh", capital: "Chandigarh" },
+    { state: "Dadra and Nagar Haveli and Daman and Diu", capital: "Daman" },
+    { state: "Delhi", capital: "New Delhi" },
+    { state: "Jammu and Kashmir", capital: "Srinagar" },
+    { state: "Ladakh", capital: "Leh" },
+    { state: "Lakshadweep", capital: "Kavaratti" },
+    { state: "Puducherry", capital: "Puducherry" }
+  ];
+  
+  let shuffled = [...questions].sort(() => 0.5 - Math.random());
+  let current = 0;
+  let score = 0;
+  
+  const questionEl = document.getElementById("question");
+  const optionsEl = document.getElementById("options");
+  const feedbackEl = document.getElementById("feedback");
+  const nextBtn = document.getElementById("next-btn");
+  
+  function loadQuestion() {
+    if (current >= shuffled.length) {
+      questionEl.textContent = `Quiz Over! Your Score: ${score}/${shuffled.length}`;
+      optionsEl.innerHTML = '';
+      feedbackEl.textContent = '';
+      nextBtn.style.display = "none";
+      document.getElementById("exit-btn").textContent = "Go to Home";
+      return;
+    }
+  
+    const q = shuffled[current];
+    questionEl.textContent = `What is the capital of ${q.state}?`;
+  
+    const options = [q.capital];
+    while (options.length < 4) {
+      let rand = questions[Math.floor(Math.random() * questions.length)].capital;
+      if (!options.includes(rand)) options.push(rand);
+    }
+  
+    options.sort(() => 0.5 - Math.random());
+  
+    optionsEl.innerHTML = "";
+    options.forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.textContent = opt;
+      btn.onclick = () => checkAnswer(opt, q.capital);
+      optionsEl.appendChild(btn);
+    });
+  
+    feedbackEl.textContent = "";
+    nextBtn.disabled = true;
+  }
+  
+  function checkAnswer(selected, correct) {
+    if (selected === correct) {
+      feedbackEl.textContent = "✅ Correct!";
+      score++;
+    } else {
+      feedbackEl.textContent = `❌ Wrong! Correct Answer: ${correct}`;
+    }
+    nextBtn.disabled = false;
+  
+    Array.from(optionsEl.children).forEach(btn => btn.disabled = true);
+  }
+  
+  nextBtn.onclick = () => {
+    current++;
+    loadQuestion();
+  };
+  
+  function exitQuiz() {
+    window.location.href = "dashboard.html";
+  }
+  
+  loadQuestion();
+  
+  </script>
+</body>
+</html>
